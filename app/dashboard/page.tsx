@@ -414,11 +414,11 @@ export default function CommandCenterPage() {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="min-w-0">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl" />
+              <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-center text-xl">🦷</div>
               <div className="min-w-0">
-                <div className="truncate text-sm text-zinc-300">Command Center</div>
+                <div className="truncate text-sm text-zinc-300">Dashboard</div>
                 <h1 className="truncate text-lg font-semibold tracking-tight">
-                  InstaSchedule Pro
+                  Cabinet Dentaire AI
                 </h1>
               </div>
             </div>
@@ -430,24 +430,7 @@ export default function CommandCenterPage() {
             {chip("Bookings: Live", "emerald")}
           </div>
 
-          <div className="flex items-center gap-2">
-            <button className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200 backdrop-blur-xl transition hover:bg-white/10">
-              New Rule
-            </button>
-
-
-            <button className="rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 px-3 py-2 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)] transition hover:brightness-110">
-              Publish
-            </button>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleMessage("book monday at 3pm")}
-            className="rounded-xl bg-emerald-500 px-3 py-2 text-sm text-white"
-          >
-            Test Booking
-          </button></div>
       </header>
 
       <main className="relative z-10 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
@@ -456,9 +439,9 @@ export default function CommandCenterPage() {
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-semibold tracking-tight">Automation Hub</h2>
+                  <h2 className="text-base font-semibold tracking-tight">Vue d'ensemble</h2>
                   <p className="text-sm text-zinc-300">
-                    Visual logic for DM → analysis → booking
+                    Statistiques en temps réel
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -636,52 +619,6 @@ export default function CommandCenterPage() {
                     );
                   })
                 )}
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl sm:p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-base font-semibold tracking-tight">
-                    Knowledge Base Settings
-                  </h2>
-                  <p className="text-sm text-zinc-300">
-                    Business facts and tone-of-voice for the AI
-                  </p>
-                </div>
-                {chip("Minimal", "zinc")}
-              </div>
-
-              <div className="mt-5 space-y-3">
-                <label className="block">
-                  <div className="text-xs font-medium text-zinc-300">Business Facts</div>
-                  <textarea
-                    className="mt-2 w-full resize-none rounded-2xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] outline-none focus:border-purple-400/35 focus:ring-2 focus:ring-purple-500/15"
-                    rows={5}
-                    placeholder={
-                      "Hours, pricing, location, cancellation policy, key services...\n\nExample:\n- 30-min consult: $49\n- Booking window: Mon–Fri\n- Cancellation: 24 hours"
-                    }
-                    defaultValue={
-                      "• 30-min consult: $49\n• Office hours: Mon–Fri, 9am–5pm\n• Cancellation: 24 hours notice\n• Services: Consults, onboarding, follow-ups"
-                    }
-                  />
-                </label>
-
-                <label className="block">
-                  <div className="text-xs font-medium text-zinc-300">Tone of Voice</div>
-                  <textarea
-                    className="mt-2 w-full resize-none rounded-2xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] outline-none focus:border-purple-400/35 focus:ring-2 focus:ring-purple-500/15"
-                    rows={4}
-                    placeholder={"Short, professional, friendly. Ask one question at a time."}
-                    defaultValue={
-                      "Professional, warm, and concise. Ask one question at a time. Confirm details before booking. Never overpromise. Use clear next steps."
-                    }
-                  />
-                </label>
-
-                <button className="w-full rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 px-3 py-2 text-sm font-medium text-white transition hover:brightness-110">
-                  Save settings
-                </button>
               </div>
             </div>
 
