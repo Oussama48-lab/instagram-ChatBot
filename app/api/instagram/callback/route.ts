@@ -83,11 +83,15 @@ export async function POST(req: NextRequest) {
     console.log("[IG CONNECT] full pagesData:", JSON.stringify(pagesData));
 
     if (pages.length === 0) {
-      const meRes  = await fetch(`https://graph.facebook.com/v25.0/me?fields=id,name,email&access_token=${longLivedToken}`);
-      const meData = await meRes.json();
-      console.log("[IG CONNECT] /me response:", JSON.stringify(meData));
+      const [meRes, permRes] = await Promise.all([
+        fetch(`https://graph.facebook.com/v25.0/me?fields=id,name&access_token=${longLivedToken}`),
+        fetch(`https://graph.facebook.com/v25.0/me/permissions?access_token=${longLivedToken}`),
+      ]);
+      const [meData, permData] = await Promise.all([meRes.json(), permRes.json()]);
+      console.log("[IG CONNECT] /me identity:", JSON.stringify(meData));
+      console.log("[IG CONNECT] /me permissions:", JSON.stringify(permData));
       return NextResponse.json({
-        error: `No Facebook Pages found for user "${meData.name ?? meData.id ?? "unknown"}". Create a Page and connect it to an Instagram Business Account.`,
+        error: `No Facebook Pages found for user "${meData.name ?? meData.id ?? "unknown"}". Make sure this Facebook account owns a Page linked to an Instagram Business Account.`,
       });
     }
 
