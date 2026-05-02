@@ -82,44 +82,51 @@ export async function POST(req: NextRequest) {
     console.log("[IG CONNECT] pages found:", pages.length, pages.map((p: any) => p.name ?? p.id));
     console.log("[IG CONNECT] full pagesData:", JSON.stringify(pagesData));
 
-    if (pages.length === 0) {
-      const [meRes, permRes] = await Promise.all([
-        fetch(`https://graph.facebook.com/v25.0/me?fields=id,name&access_token=${longLivedToken}`),
-        fetch(`https://graph.facebook.com/v25.0/me/permissions?access_token=${longLivedToken}`),
-      ]);
-      const [meData, permData] = await Promise.all([meRes.json(), permRes.json()]);
-      console.log("[IG CONNECT] /me identity:", JSON.stringify(meData));
-      console.log("[IG CONNECT] /me permissions:", JSON.stringify(permData));
-      return NextResponse.json({
-        error: `No Facebook Pages found for user "${meData.name ?? meData.id ?? "unknown"}". Make sure this Facebook account owns a Page linked to an Instagram Business Account.`,
-      });
-    }
-
     // ── Step 4: Find Instagram Business Account ───────────────────────────────
     let instagramAccountId: string | null = null;
     let pageAccessToken:    string | null = null;
     let facebookPageId:     string | null = null;
     let instagramUsername:  string | null = null;
 
-    for (const page of pages) {
-      const igId = page.instagram_business_account?.id ?? null;
-      const igUsername = page.instagram_business_account?.username ?? null;
-      console.log(`[IG CONNECT] page=${page.id} igId=${igId} igUsername=${igUsername}`);
-      if (igId) {
-        instagramAccountId = igId;
-        instagramUsername  = igUsername;
-        pageAccessToken    = page.access_token;
-        facebookPageId     = page.id;
-        break;
+    if (pages.length === 0) {
+      // Fallback: try getting Instagram account directly from the token
+      const meRes = await fetch(`https://graph.facebook.com/v25.0/me?fields=id,name,instagram_business_account{id,username}&access_token=${longLivedToken}`);
+      const meData = await meRes.json();
+      console.log("[IG CONNECT] /me direct:", JSON.stringify(meData));
+
+      const igAccountId = meData?.instagram_business_account?.id;
+      const igUsername  = meData?.instagram_business_account?.username;
+
+      if (igAccountId) {
+        const igPageRes  = await fetch(`https://graph.facebook.com/v25.0/${igAccountId}?fields=id,username,name&access_token=${longLivedToken}`);
+        const igPageData = await igPageRes.json();
+        console.log("[IG CONNECT] IG account direct:", JSON.stringify(igPageData));
+
+        instagramAccountId = igAccountId;
+        instagramUsername  = igUsername ?? igPageData.username ?? null;
+        pageAccessToken    = longLivedToken;
+        facebookPageId     = meData.id;
+      } else {
+        const identityRes  = await fetch(`https://graph.facebook.com/v25.0/me?fields=id,name&access_token=${longLivedToken}`);
+        const identityData = await identityRes.json();
+        return NextResponse.json({
+          error: `No Facebook Pages found for user "${identityData.name}". Make sure this Facebook account owns a Page linked to an Instagram Business Account.`,
+        });
       }
-    }
-
-    console.log("[IG CONNECT] instagram account id found:", instagramAccountId ?? "NONE");
-
-    if (!instagramAccountId || !pageAccessToken) {
-      return NextResponse.json({
-        error: "No Instagram Business Account linked to any of your Pages.",
-      });
+    } else {
+      for (const page of pages) {
+        const igId       = page.instagram_business_account?.id ?? null;
+        const igUsername = page.instagram_business_account?.username ?? null;
+        console.log(`[IG CONNECT] page=${page.id} igId=${igId} igUsername=${igUsername}`);
+        if (igId) {
+          instagramAccountId = igId;
+          instagramUsername  = igUsername;
+          pageAccessToken    = page.access_token;
+          facebookPageId     = page.id;
+          break;
+        }
+      }
+      console.log("[IG CONNECT] instagram account id found:", instagramAccountId ?? "NONE");
     }
 
     // ── Step 6: Persist to buisness_owner ────────────────────────────────────
