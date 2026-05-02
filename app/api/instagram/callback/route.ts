@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     // ── Step 3: Get Facebook Pages ────────────────────────────────────────────
     const pagesRes  = await fetch(`https://graph.facebook.com/v18.0/me/accounts?access_token=${longLivedToken}`);
     const pagesData = await pagesRes.json();
-    console.log("[IG CONNECT] step3 pages response:", JSON.stringify(pagesData).substring(0, 400));
+    console.log('[PAGES RESPONSE]:', JSON.stringify(pagesData));
 
     if (pagesData.error) {
       return NextResponse.json({ error: `Pages fetch error: ${pagesData.error.message ?? JSON.stringify(pagesData.error)}` });
