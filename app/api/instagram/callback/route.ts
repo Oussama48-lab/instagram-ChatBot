@@ -69,18 +69,18 @@ export async function POST(req: NextRequest) {
 
     const longLivedToken: string = longTokenData.access_token;
 
-    // ── Step 3: Find Instagram Business Account (3-attempt dynamic strategy) ──
+    // ── Step 3: Find Instagram Business Account ──────────────────────────────
     let instagramAccountId: string | null = null;
     let instagramUsername:  string | null = null;
     let pageAccessToken:    string | null = null;
     let facebookPageId:     string | null = null;
 
-    // Attempt 1 — /me/accounts (standard pages list)
+    // Try Facebook Login flow first (me/accounts)
     const accountsRes  = await fetch(
       `https://graph.facebook.com/v25.0/me/accounts?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${longLivedToken}`
     );
     const accountsData = await accountsRes.json();
-    console.log("[IG CONNECT] attempt1 /me/accounts:", JSON.stringify(accountsData));
+    console.log("[IG CONNECT] /me/accounts:", JSON.stringify(accountsData));
 
     const pages: any[] = accountsData.data ?? [];
     for (const page of pages) {
@@ -89,76 +89,23 @@ export async function POST(req: NextRequest) {
         instagramUsername  = page.instagram_business_account.username ?? null;
         pageAccessToken    = page.access_token ?? longLivedToken;
         facebookPageId     = page.id;
-        console.log(`[IG CONNECT] attempt1 found: page=${facebookPageId} ig=${instagramAccountId}`);
         break;
       }
     }
 
-    // Attempt 2 — /me/accounts again (same call, already have result; skip duplicate)
-    // Attempt 3 — /me with nested accounts (Business Portfolio fallback)
+    // Fallback: Instagram Login flow — /me returns IG account directly
     if (!instagramAccountId) {
-      const meAccountsRes  = await fetch(
-        `https://graph.facebook.com/v25.0/me?fields=id,name,accounts{id,name,access_token,instagram_business_account{id,username}}&access_token=${longLivedToken}`
-      );
-      const meAccountsData = await meAccountsRes.json();
-      console.log("[IG CONNECT] attempt3 /me nested accounts:", JSON.stringify(meAccountsData));
-
-      const nestedPages: any[] = meAccountsData.accounts?.data ?? [];
-      for (const page of nestedPages) {
-        if (page.instagram_business_account?.id) {
-          instagramAccountId = page.instagram_business_account.id;
-          instagramUsername  = page.instagram_business_account.username ?? null;
-          pageAccessToken    = page.access_token ?? longLivedToken;
-          facebookPageId     = page.id;
-          console.log(`[IG CONNECT] attempt3 found: page=${facebookPageId} ig=${instagramAccountId}`);
-          break;
-        }
-      }
-    }
-
-    // Attempt 4 — query each page ID directly for instagram_business_account
-    if (!instagramAccountId) {
-      // Get all page IDs the user granted access to during OAuth
-      const allPagesRes  = await fetch(
-        `https://graph.facebook.com/v25.0/me/accounts?fields=id,name,access_token&access_token=${longLivedToken}`
-      );
-      const allPagesData = await allPagesRes.json();
-      console.log("[IG CONNECT] attempt4 all pages:", JSON.stringify(allPagesData));
-
-      const allPages: any[] = allPagesData.data ?? [];
-
-      for (const page of allPages) {
-        const pageDetailRes = await fetch(
-          `https://graph.facebook.com/v25.0/${page.id}?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${page.access_token ?? longLivedToken}`
-        );
-        const pageDetail = await pageDetailRes.json();
-        console.log(`[IG CONNECT] attempt4 page ${page.id} detail:`, JSON.stringify(pageDetail));
-
-        if (pageDetail.instagram_business_account?.id) {
-          instagramAccountId = pageDetail.instagram_business_account.id;
-          instagramUsername  = pageDetail.instagram_business_account.username ?? null;
-          pageAccessToken    = pageDetail.access_token ?? page.access_token ?? longLivedToken;
-          facebookPageId     = page.id;
-          console.log(`[IG CONNECT] attempt4 found: page=${facebookPageId} ig=${instagramAccountId}`);
-          break;
-        }
-      }
-    }
-
-    // Attempt 5 — Instagram Business Login API (different endpoint)
-    if (!instagramAccountId) {
-      const igUserRes  = await fetch(
+      const igMeRes  = await fetch(
         `https://graph.facebook.com/v25.0/me?fields=id,username,name&access_token=${longLivedToken}`
       );
-      const igUserData = await igUserRes.json();
-      console.log("[IG CONNECT] attempt5 /me instagram login:", JSON.stringify(igUserData));
+      const igMeData = await igMeRes.json();
+      console.log("[IG CONNECT] /me instagram fallback:", JSON.stringify(igMeData));
 
-      if (igUserData.id && !igUserData.error) {
-        instagramAccountId = igUserData.id;
-        instagramUsername  = igUserData.username ?? null;
+      if (igMeData.id && igMeData.username && !igMeData.error) {
+        instagramAccountId = igMeData.id;
+        instagramUsername  = igMeData.username;
         pageAccessToken    = longLivedToken;
-        facebookPageId     = igUserData.id;
-        console.log(`[IG CONNECT] attempt5 found: ig=${instagramAccountId} username=${instagramUsername}`);
+        facebookPageId     = igMeData.id;
       }
     }
 
