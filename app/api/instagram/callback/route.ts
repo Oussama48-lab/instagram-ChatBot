@@ -69,22 +69,56 @@ export async function POST(req: NextRequest) {
 
     const longLivedToken: string = longTokenData.access_token;
 
-    // ── Step 3: Query page directly ──────────────────────────────────────────
-    // Skip /me/accounts — query the page directly instead
-    const pageRes = await fetch(
-      `https://graph.facebook.com/v25.0/1133705153161530?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${longLivedToken}`
-    );
-    const pageData = await pageRes.json();
-    console.log("[IG CONNECT] direct page query:", JSON.stringify(pageData));
+    // ── Step 3: Find Instagram Business Account (3-attempt dynamic strategy) ──
+    let instagramAccountId: string | null = null;
+    let instagramUsername:  string | null = null;
+    let pageAccessToken:    string | null = null;
+    let facebookPageId:     string | null = null;
 
-    const instagramAccountId = pageData?.instagram_business_account?.id ?? null;
-    const instagramUsername  = pageData?.instagram_business_account?.username ?? null;
-    const pageAccessToken    = pageData?.access_token ?? longLivedToken;
-    const facebookPageId     = "1133705153161530";
+    // Attempt 1 — /me/accounts (standard pages list)
+    const accountsRes  = await fetch(
+      `https://graph.facebook.com/v25.0/me/accounts?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${longLivedToken}`
+    );
+    const accountsData = await accountsRes.json();
+    console.log("[IG CONNECT] attempt1 /me/accounts:", JSON.stringify(accountsData));
+
+    const pages: any[] = accountsData.data ?? [];
+    for (const page of pages) {
+      if (page.instagram_business_account?.id) {
+        instagramAccountId = page.instagram_business_account.id;
+        instagramUsername  = page.instagram_business_account.username ?? null;
+        pageAccessToken    = page.access_token ?? longLivedToken;
+        facebookPageId     = page.id;
+        console.log(`[IG CONNECT] attempt1 found: page=${facebookPageId} ig=${instagramAccountId}`);
+        break;
+      }
+    }
+
+    // Attempt 2 — /me/accounts again (same call, already have result; skip duplicate)
+    // Attempt 3 — /me with nested accounts (Business Portfolio fallback)
+    if (!instagramAccountId) {
+      const meAccountsRes  = await fetch(
+        `https://graph.facebook.com/v25.0/me?fields=id,name,accounts{id,name,access_token,instagram_business_account{id,username}}&access_token=${longLivedToken}`
+      );
+      const meAccountsData = await meAccountsRes.json();
+      console.log("[IG CONNECT] attempt3 /me nested accounts:", JSON.stringify(meAccountsData));
+
+      const nestedPages: any[] = meAccountsData.accounts?.data ?? [];
+      for (const page of nestedPages) {
+        if (page.instagram_business_account?.id) {
+          instagramAccountId = page.instagram_business_account.id;
+          instagramUsername  = page.instagram_business_account.username ?? null;
+          pageAccessToken    = page.access_token ?? longLivedToken;
+          facebookPageId     = page.id;
+          console.log(`[IG CONNECT] attempt3 found: page=${facebookPageId} ig=${instagramAccountId}`);
+          break;
+        }
+      }
+    }
 
     if (!instagramAccountId) {
       return NextResponse.json({
-        error: "Could not find Instagram account linked to the page.",
+        error: "Could not find Instagram Business Account. Make sure your Facebook Page is connected to an Instagram Business Account.",
       });
     }
 
