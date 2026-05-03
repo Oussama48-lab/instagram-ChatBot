@@ -75,12 +75,11 @@ export async function POST(req: NextRequest) {
     let pageAccessToken:    string | null = null;
     let facebookPageId:     string | null = null;
 
-    // Try Facebook Login flow first (me/accounts)
     const accountsRes  = await fetch(
       `https://graph.facebook.com/v25.0/me/accounts?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${longLivedToken}`
     );
     const accountsData = await accountsRes.json();
-    console.log("[IG CONNECT] /me/accounts:", JSON.stringify(accountsData));
+    console.log("[IG CONNECT] me/accounts:", JSON.stringify(accountsData));
 
     const pages: any[] = accountsData.data ?? [];
     for (const page of pages) {
@@ -93,25 +92,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Fallback: Instagram Login flow — /me returns IG account directly
-    if (!instagramAccountId) {
-      const igMeRes  = await fetch(
-        `https://graph.facebook.com/v25.0/me?fields=id,username,name&access_token=${longLivedToken}`
-      );
-      const igMeData = await igMeRes.json();
-      console.log("[IG CONNECT] /me instagram fallback:", JSON.stringify(igMeData));
-
-      if (igMeData.id && igMeData.username && !igMeData.error) {
-        instagramAccountId = igMeData.id;
-        instagramUsername  = igMeData.username;
-        pageAccessToken    = longLivedToken;
-        facebookPageId     = igMeData.id;
-      }
-    }
-
     if (!instagramAccountId) {
       return NextResponse.json({
-        error: "Could not find Instagram Business Account. Make sure your Facebook Page is connected to an Instagram Business Account.",
+        error: "Could not find Instagram Business Account linked to your Facebook Page.",
       });
     }
 
