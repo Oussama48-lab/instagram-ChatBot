@@ -143,7 +143,7 @@ export default function CommandCenterPage() {
 
     const { error } = await supabase
       .from("customers")
-      .update({ status: "ARCHIVED" })
+      .update({ status: "DOCTOR_REPLIED" })
       .eq("id", customer.id);
 
     if (error) {
@@ -602,7 +602,7 @@ export default function CommandCenterPage() {
                                 onClick={() => markCompleted(customer)}
                                 className={`rounded-lg px-4 py-1.5 text-xs font-semibold transition ${customer.has_photo ? "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10" : "bg-purple-500 text-white hover:bg-purple-600 shadow-[0_0_10px_rgba(168,85,247,0.3)]"}`}
                               >
-                                Called ✓
+                                Done - Book Appointment ✓
                               </button>
                             </div>
                           </div>

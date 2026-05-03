@@ -931,7 +931,14 @@ JSON only: { "reply": "your warm Darija message asking for their name" }`;
         .from("customers")
         .update({ status: "BOT_ACTIVE" })
         .eq("instagram_id", senderId);
-      console.log(`[CONTEXT] Doctor replied → post-triage`);
+      console.log(`[CONTEXT] Doctor done → activating booking flow`);
+
+      // Immediately greet patient and offer booking
+      const availableSlots = await getAvailableSlots();
+      const greetMsg = `مرحبا من جديد 😊 الطبيب شاف ملفك. واش بغيتي تدير رونديفو؟ هادي الأوقات المتاحة:\n${availableSlots}`;
+      await sendDM(senderId, greetMsg, token);
+      await saveMsgHistory(senderId, "(doctor done)", greetMsg, bizId);
+      return new Response("OK", { status: 200 });
     }
 
     // ── EXTRACT ───────────────────────────────────────────────────────────────
