@@ -223,12 +223,12 @@ function extractNameFromText(text: string): string | null {
     /^(bien\s*sur|d'?accord|ok|okay|oui|yes|wakha|iyeh|ah|mashi|ewa|yah|ouais|parfait|super|merci|noted|ayeh|marhba|salam|inchallah|hamdullah|labas|bikhir)(\s.*)?$/i;
   if (AFF.test(t)) return null;
   const EXPLICIT =
-    /^(?:smit[yi]|smiyti|ismi|esmi|je\s*m'?appelle|my\s*name\s*is)[\s:]+(.{3,40})$/i;
+    /^(?:s+miyti|smit[yi]|smiyti|ismi|esmi|je\s*m'?appelle|my\s*name\s*is|اسمي|سميتي)[\s:]+(.{3,40})$/i;
   const em = t.match(EXPLICIT);
   if (em?.[1]) return em[1].trim();
   const words = t.split(/\s+/);
   if (words.length < 2 || words.length > 4) return null;
-  if (!/^[A-Za-zÀ-ÿ'\- ]{3,45}$/.test(t)) return null;
+  if (!/^[A-Za-zÀ-ÿ'\-؀-ۿ ]{3,45}$/.test(t)) return null;
   if (/\d/.test(t)) return null;
   if (/[?!@#$%&*()+={}\[\]|<>]/.test(t)) return null;
   const NOT_A_NAME = new Set([
@@ -252,7 +252,7 @@ function isValidHumanName(name: string): boolean {
   if (!name || name.trim().length < 4) return false;
   const parts = name.trim().split(/\s+/);
   if (parts.length < 2 || parts.length > 4) return false;
-  if (!/^[A-Za-zÀ-ÿ\s'\-]+$/.test(name)) return false;
+  if (!/^[A-Za-zÀ-ÿ\s'\-؀-ۿ]+$/.test(name)) return false;
   const BAD =
     /^(ayeh|iyeh|marhba|ahlen|salam|wakha|oui|yes|ok|okay|ewa|bien|sur|merci|chokran|inchallah|hamdullah|labas|bikhir|parfait|super|noted|daccord|ouais|exact|waw|na3am|ah\b)/i;
   if (BAD.test(name.trim())) return false;
@@ -1248,8 +1248,8 @@ RESPONSE FORMAT — JSON only, nothing else:
       ? "BOT_ACTIVE"
       : profile.status;
 
-    if (isNowComplete && !wasComplete && !isPostTriage && !savedImageUrl) {
-      replyText   = `Tbib ghay3ytlik daba chwya bach y3tik les détails 😊`;
+    if (isNowComplete && !wasComplete && !isPostTriage && hasPhoto) {
+      replyText   = `الطبيب غيتصل بيك دابا شوية باش يعطيك les détails 😊`;
       finalStatus = "WAITING_FOR_DOCTOR";
       console.log(`[HANDOFF] → WAITING_FOR_DOCTOR`);
     } else if (isPostTriage && finalDay && finalTime) {
@@ -1300,6 +1300,9 @@ RESPONSE FORMAT — JSON only, nothing else:
           status:            finalStatus,
           last_seen_at:      new Date().toISOString(),
           business_owner_id: bizId,
+          ...(finalName      ? { name: finalName, first_name: finalFirstName, last_name: finalLastName } : {}),
+          ...(finalPhone     ? { phone: finalPhone } : {}),
+          ...(savedImageUrl  ? { has_photo: true, last_dental_image: savedImageUrl } : {}),
         },
         { onConflict: "instagram_id" }
       );
