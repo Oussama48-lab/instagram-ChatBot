@@ -58,17 +58,15 @@ export default function CommandCenterPage() {
     if (success) getOpenSlots();
   }
   async function getOpenSlots() {
+    if (!bizOwner?.id) return;
     const { data, error } = await supabase
       .from("appointment_slots")
       .select("*")
+      .eq("business_owner_id", bizOwner.id)
       .order("day", { ascending: true });
 
-    if (error) {
-      console.error("Error fetching slots:", error);
-    } else {
-      console.log('[SLOTS LOADED]', data);
-      setOpenSlots(data ?? []);
-    }
+    if (error) console.error("Error fetching slots:", error);
+    else setOpenSlots(data ?? []);
   }
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -81,17 +79,19 @@ export default function CommandCenterPage() {
   }, [router]);
 
   useEffect(() => {
-    if (!authChecked) return;
+    if (!bizOwner?.id) return;
     getOpenSlots();
     getCustomers();
-    supabase.from("customers").select("id", { count: "exact" }).eq("status", "ARCHIVED").then(({ count }) => setArchivedCount(count ?? 0));
+    supabase.from("customers")
+      .select("id", { count: "exact" })
+      .eq("business_owner_id", bizOwner.id)
+      .eq("status", "ARCHIVED")
+      .then(({ count }) => setArchivedCount(count ?? 0));
 
-    // Refresh every 30s to keep it "Live"
     const interval = setInterval(() => {
       getCustomers();
     }, 30000);
 
-    // Real-time subscription — re-fetch customers so counts update instantly
     const channel = supabase
       .channel("customers-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, () => {
@@ -100,19 +100,11 @@ export default function CommandCenterPage() {
       })
       .subscribe();
 
-    const slotsChannel = supabase
-      .channel("slots-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "appointment_slots" }, () => {
-        getOpenSlots();
-      })
-      .subscribe();
-
     return () => {
       clearInterval(interval);
       supabase.removeChannel(channel);
-      supabase.removeChannel(slotsChannel);
     };
-  }, [authChecked]);
+  }, [bizOwner?.id]);
 
   async function handleManualReply(customer: any) {
     const text = draftMessages[customer.id]?.trim();
@@ -220,17 +212,16 @@ export default function CommandCenterPage() {
     return true;
   }
   async function getCustomers() {
+    if (!bizOwner?.id) return;
     const { data, error } = await supabase
       .from("customers")
       .select("*")
+      .eq("business_owner_id", bizOwner.id)
       .in("status", ["WAITING_FOR_DOCTOR", "DOCTOR_REPLIED"])
       .order("last_seen_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching customers:", error);
-    } else {
-      setCustomers(data || []);
-    }
+    if (error) console.error("Error fetching customers:", error);
+    else setCustomers(data || []);
   }
 
   async function handleSlotClick(day: string, time: string) {
