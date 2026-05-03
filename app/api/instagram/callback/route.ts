@@ -69,64 +69,23 @@ export async function POST(req: NextRequest) {
 
     const longLivedToken: string = longTokenData.access_token;
 
-    // ── Step 3: Get Facebook Pages ────────────────────────────────────────────
-    const pagesRes  = await fetch(`https://graph.facebook.com/v25.0/me/accounts?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${longLivedToken}`);
-    const pagesData = await pagesRes.json();
-    console.log('[PAGES RESPONSE]:', JSON.stringify(pagesData));
+    // ── Step 3: Query page directly ──────────────────────────────────────────
+    // Skip /me/accounts — query the page directly instead
+    const pageRes = await fetch(
+      `https://graph.facebook.com/v25.0/1133705153161530?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${longLivedToken}`
+    );
+    const pageData = await pageRes.json();
+    console.log("[IG CONNECT] direct page query:", JSON.stringify(pageData));
 
-    if (pagesData.error) {
-      return NextResponse.json({ error: `Pages fetch error: ${pagesData.error.message ?? JSON.stringify(pagesData.error)}` });
-    }
+    const instagramAccountId = pageData?.instagram_business_account?.id ?? null;
+    const instagramUsername  = pageData?.instagram_business_account?.username ?? null;
+    const pageAccessToken    = pageData?.access_token ?? longLivedToken;
+    const facebookPageId     = "1133705153161530";
 
-    const pages: any[] = pagesData.data ?? [];
-    console.log("[IG CONNECT] pages found:", pages.length, pages.map((p: any) => p.name ?? p.id));
-    console.log("[IG CONNECT] full pagesData:", JSON.stringify(pagesData));
-
-    // ── Step 4: Find Instagram Business Account ───────────────────────────────
-    let instagramAccountId: string | null = null;
-    let pageAccessToken:    string | null = null;
-    let facebookPageId:     string | null = null;
-    let instagramUsername:  string | null = null;
-
-    if (pages.length === 0) {
-      // Fallback: try getting Instagram account directly from the token
-      const meRes = await fetch(`https://graph.facebook.com/v25.0/me?fields=id,name,instagram_business_account{id,username}&access_token=${longLivedToken}`);
-      const meData = await meRes.json();
-      console.log("[IG CONNECT] /me direct:", JSON.stringify(meData));
-
-      const igAccountId = meData?.instagram_business_account?.id;
-      const igUsername  = meData?.instagram_business_account?.username;
-
-      if (igAccountId) {
-        const igPageRes  = await fetch(`https://graph.facebook.com/v25.0/${igAccountId}?fields=id,username,name&access_token=${longLivedToken}`);
-        const igPageData = await igPageRes.json();
-        console.log("[IG CONNECT] IG account direct:", JSON.stringify(igPageData));
-
-        instagramAccountId = igAccountId;
-        instagramUsername  = igUsername ?? igPageData.username ?? null;
-        pageAccessToken    = longLivedToken;
-        facebookPageId     = meData.id;
-      } else {
-        const identityRes  = await fetch(`https://graph.facebook.com/v25.0/me?fields=id,name&access_token=${longLivedToken}`);
-        const identityData = await identityRes.json();
-        return NextResponse.json({
-          error: `No Facebook Pages found for user "${identityData.name}". Make sure this Facebook account owns a Page linked to an Instagram Business Account.`,
-        });
-      }
-    } else {
-      for (const page of pages) {
-        const igId       = page.instagram_business_account?.id ?? null;
-        const igUsername = page.instagram_business_account?.username ?? null;
-        console.log(`[IG CONNECT] page=${page.id} igId=${igId} igUsername=${igUsername}`);
-        if (igId) {
-          instagramAccountId = igId;
-          instagramUsername  = igUsername;
-          pageAccessToken    = page.access_token;
-          facebookPageId     = page.id;
-          break;
-        }
-      }
-      console.log("[IG CONNECT] instagram account id found:", instagramAccountId ?? "NONE");
+    if (!instagramAccountId) {
+      return NextResponse.json({
+        error: "Could not find Instagram account linked to the page.",
+      });
     }
 
     // ── Step 6: Persist to buisness_owner ────────────────────────────────────
