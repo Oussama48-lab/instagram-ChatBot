@@ -783,14 +783,21 @@ Patient reply: "${combinedText || messageText}"`;
         const parsed = JSON.parse(raw.substring(s, e + 1));
 
         if (parsed.intent === "NO") {
-          const thankMsg =
-            "ayeh marhba bik fay w9ita, hena kaynin 😊 ila bghiti chi haja men ba3d ma t9essrch!";
-          await sendDM(senderId, thankMsg, token);
+          const priceMsg = `واخا مشكيل 😊 هادي لأسعار ديالنا:
+
+🦷 détartrage (تنظيف الأسنان): 300 درهم
+🔧 plombage (حشو): 400 درهم
+🦷 extraction (خلع): 200 درهم
+✨ blanchiment (تبييض): 500 درهم
+📞 consultation: مجانية بتيليفون مع الطبيب
+
+إلا بغيتي تدير رونديفو في أي وقت، هنا كاينين 😊`;
+          await sendDM(senderId, priceMsg, token);
           await supabase.from("customer_messages").delete().eq("customer_id", senderId);
           await supabase.from("pending_messages").delete().eq("instagram_id", senderId);
           await supabase.from("customers").delete().eq("instagram_id", senderId);
           await deleteSession(senderId);
-          console.log("[SESSION] Deleted — no appointment intent");
+          console.log("[SESSION] Deleted — sent price list");
           return new Response("OK", { status: 200 });
         } else {
           const apptSession = await getSession(senderId);
