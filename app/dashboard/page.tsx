@@ -331,9 +331,10 @@ export default function CommandCenterPage() {
   ];
 
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
-  const times = ["9a", "11a", "1p", "3p", "5p"] as const;
+  const ALL_TIMES = ["9a", "10a", "11a", "12p", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p"];
+  const times = ALL_TIMES.filter(t => openSlots.some(s => s.time === t));
   type Day = (typeof days)[number];
-  type Time = (typeof times)[number];
+  type Time = string;
   type SlotState = "open" | "confirmed" | "blocked";
 
   const liveFeed = [
