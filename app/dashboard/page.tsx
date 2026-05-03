@@ -137,10 +137,6 @@ export default function CommandCenterPage() {
   }
 
   async function markCompleted(customer: any) {
-    const name = customer.name || customer.first_name || (customer.instagram_id ? `@${customer.instagram_id}` : "Unknown Patient");
-    const confirmed = window.confirm(`Are you sure you want to mark ${name} as completed and notify the patient?`);
-    if (!confirmed) return;
-
     const res = await fetch("/api/instagram/notify-patient", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
