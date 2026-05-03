@@ -586,7 +586,7 @@ export async function POST(req: Request) {
       .maybeSingle();
     const currentStatus = statusRow?.status as BotStatus | null;
 
-    if (currentStatus === "WAITING_FOR_DOCTOR" || currentStatus === "ARCHIVED") {
+    if (currentStatus === "WAITING_FOR_DOCTOR" || currentStatus === "DOCTOR_REPLIED" || currentStatus === "ARCHIVED") {
       console.log(`[EARLY EXIT] Status ${currentStatus} — silent.`);
       return new Response("OK", { status: 200 });
     }
@@ -594,9 +594,7 @@ export async function POST(req: Request) {
     // These statuses need immediate handling — never buffer them
     const bypassBuffer =
       currentStatus === "WAITING_FOR_CONSENT" ||
-      currentStatus === "WAITING_FOR_APPOINTMENT_INTENT" ||
-      currentStatus === "WAITING_FOR_DOCTOR" ||
-      currentStatus === "ARCHIVED";
+      currentStatus === "WAITING_FOR_APPOINTMENT_INTENT";
 
     // ── TYPING WINDOW ────────────────────────────────────────────────────────
     // Insert AFTER deduplication — only non-duplicate messages enter the buffer
@@ -760,7 +758,7 @@ Patient message: "${combinedText || messageText}"`;
     }
 
     // ── STATUS GUARDS ────────────────────────────────────────────────────────
-    if (profile.status === "WAITING_FOR_DOCTOR" || currentStatus === "WAITING_FOR_DOCTOR") {
+    if (profile.status === "WAITING_FOR_DOCTOR") {
       console.log(`[PAUSE] WAITING_FOR_DOCTOR — completely silent.`);
       return new Response("OK", { status: 200 });
     }
@@ -933,22 +931,7 @@ JSON only: { "reply": "your warm Darija message asking for their name" }`;
       }
     }
 
-    // ── DOCTOR REPLIED ────────────────────────────────────────────────────────
-    const doctorJustReplied = profile.status === "DOCTOR_REPLIED";
-    if (doctorJustReplied) {
-      await supabase
-        .from("customers")
-        .update({ status: "BOT_ACTIVE" })
-        .eq("instagram_id", senderId);
-      console.log(`[CONTEXT] Doctor done → activating booking flow`);
-
-      // Immediately greet patient and offer booking
-      const availableSlots = await getAvailableSlots();
-      const greetMsg = `مرحبا من جديد 😊 الطبيب شاف ملفك. واش بغيتي تدير رونديفو؟ هادي الأوقات المتاحة:\n${availableSlots}`;
-      await sendDM(senderId, greetMsg, token);
-      await saveMsgHistory(senderId, "(doctor done)", greetMsg, bizId);
-      return new Response("OK", { status: 200 });
-    }
+    const doctorJustReplied = false; // greeting is now sent proactively from dashboard
 
     // ── EXTRACT ───────────────────────────────────────────────────────────────
     // If this is an image message, don't try to extract
@@ -1083,7 +1066,7 @@ RESPONSE FORMAT — JSON only, nothing else:
       const latestSess = await getSession(senderId);
       const effectiveName  = mergedName  || latestSess?.name  || freshSession?.name  || null;
       const effectivePhone = mergedPhone || latestSess?.phone || freshSession?.phone || null;
-      const effectivePhoto = savedImageUrl        ?? freshSession?.photo_url ?? null;
+      const _effectivePhoto = savedImageUrl        ?? freshSession?.photo_url ?? null;
 
       if (savedImageUrl && effectiveName && effectivePhone) {
         // All 3 collected — save to session and ask appointment intent

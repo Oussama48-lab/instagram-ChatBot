@@ -138,16 +138,19 @@ export default function CommandCenterPage() {
 
   async function markCompleted(customer: any) {
     const name = customer.name || customer.first_name || (customer.instagram_id ? `@${customer.instagram_id}` : "Unknown Patient");
-    const confirmed = window.confirm(`Are you sure you want to mark ${name} as completed?`);
+    const confirmed = window.confirm(`Are you sure you want to mark ${name} as completed and notify the patient?`);
     if (!confirmed) return;
 
-    const { error } = await supabase
-      .from("customers")
-      .update({ status: "DOCTOR_REPLIED" })
-      .eq("id", customer.id);
+    const res = await fetch("/api/instagram/notify-patient", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customer_id: customer.id }),
+    });
 
-    if (error) {
-      console.error("Error marking as completed:", error);
+    if (!res.ok) {
+      const data = await res.json();
+      console.error("Error notifying patient:", data.error);
+      alert(`Failed to notify patient: ${data.error}`);
     } else {
       getCustomers();
     }
