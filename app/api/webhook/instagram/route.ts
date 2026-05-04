@@ -799,16 +799,8 @@ Patient reply: "${combinedText || messageText}"`;
         const parsed = JSON.parse(raw.substring(s, e + 1));
 
         if (parsed.intent === "NO") {
-          const priceMsg = `واخا مشكيل 😊 هادي لأسعار ديالنا:
-
-🦷 détartrage (تنظيف الأسنان): 300 درهم
-🔧 plombage (حشو): 400 درهم
-🦷 extraction (خلع): 200 درهم
-✨ blanchiment (تبييض): 500 درهم
-📞 consultation: مجانية بتيليفون مع الطبيب
-
-إلا بغيتي تدير رونديفو في أي وقت، هنا كاينين 😊`;
-          await sendDM(senderId, priceMsg, token);
+          const noMsg = `واخا مشكيل 😊 كنا هنا في أي وقت محتاج فيه. تصبح على خير!`;
+          await sendDM(senderId, noMsg, token);
           await supabase.from("customer_messages").delete().eq("customer_id", senderId);
           await supabase.from("pending_messages").delete().eq("instagram_id", senderId);
           await supabase.from("customers").delete().eq("instagram_id", senderId);
