@@ -1,37 +1,42 @@
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Routes that never require authentication
-const PUBLIC_PATHS = [
-  "/login",
-  "/signup",
-  "/",
-  "/auth/confirm",
-  "/auth/instagram/callback",
-  "/api/webhook/instagram",
-  "/api/instagram/callback",
-];
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
 
-function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const { pathname } = req.nextUrl;
+
+  // Protected routes — redirect to login if not authenticated
+  const protectedRoutes = ["/dashboard"];
+  const isProtected = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
   );
-}
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // API routes and public paths always pass through
-  if (pathname.startsWith("/api/") || isPublicPath(pathname)) {
-    return NextResponse.next();
+  if (isProtected && !session) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // All other routes pass through — session is managed client-side by Supabase
-  // (supabase-js browser client stores in localStorage, not cookies,
-  //  so cookie-based checks here would always fail and block authenticated users)
-  return NextResponse.next();
+  // Public only routes — redirect to dashboard if already authenticated
+  const publicOnlyRoutes = ["/login", "/signup"];
+  const isPublicOnly = publicOnlyRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  if (isPublicOnly && session) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  return res;
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  matcher: ["/dashboard/:path*", "/login", "/signup"],
 };
