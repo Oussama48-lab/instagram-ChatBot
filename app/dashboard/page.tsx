@@ -415,10 +415,21 @@ export default function CommandCenterPage() {
             </div>
           </div>
 
-          <div className="hidden items-center gap-2 sm:flex">
-            {chip("IG: Connected", "purple")}
-            {chip("Auto-Reply: On", "zinc")}
-            {chip("Bookings: Live", "emerald")}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden items-center gap-2 sm:flex">
+              {chip("IG: Connected", "purple")}
+              {chip("Auto-Reply: On", "zinc")}
+              {chip("Bookings: Live", "emerald")}
+            </div>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = "/login";
+              }}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-400 backdrop-blur-xl transition hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
+            >
+              Logout
+            </button>
           </div>
 
           </div>
