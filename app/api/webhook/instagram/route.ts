@@ -724,10 +724,19 @@ Patient message: "${combinedText || messageText}"`;
         console.error("[INTENT] Error:", err);
       }
 
-      const welcomeMsg = `Salam 😊 Mrhba bik f cabinet dyalna!\n\nGhadi nsswlok 3 ass2ila bssita bach nakhdo les infos li khassina — ghadi takhod ghir dqiqa mn we9tk.\n\nMn ba3d, tbib ghay3ytlik b appel bach dir consultation gratuite`;
+      const welcomeMsg = `مرحبا 😊 أهلا بك في كابيني ديال أسنان!
+
+هادي أسعارنا:
+🦷 تنظيف الأسنان (détartrage): 300 درهم
+🔧 حشو (plombage): 400 درهم
+🦷 خلع (extraction): 200 درهم
+✨ تبييض (blanchiment): 500 درهم
+📞 كونسولتاسيون: مجانية بتيليفون مع الطبيب
+
+واش بغيتي تدير رونديفو مع الطبيب؟ 😊`;
       const { error: insertErr } = await supabase.from("customers").insert({
         instagram_id:      senderId,
-        status:            "WAITING_FOR_CONSENT",
+        status:            "WAITING_FOR_APPOINTMENT_INTENT",
         has_photo:         false,
         intent:            "interested",
         last_seen_at:      new Date().toISOString(),
