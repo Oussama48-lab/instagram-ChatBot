@@ -808,14 +808,40 @@ Patient reply: "${combinedText || messageText}"`;
           console.log("[SESSION] Deleted — sent price list");
           return new Response("OK", { status: 200 });
         } else {
-          // Patient is interested — start collecting info
-          await supabase
-            .from("customers")
-            .update({ status: "BOT_ACTIVE" })
-            .eq("instagram_id", senderId);
-          const askNameMsg = "عافاك عطيني سميتك الكاملة (الإسم و النسب) 😊";
-          await sendDM(senderId, askNameMsg, token);
-          await saveMsgHistory(senderId, combinedText || messageText || "", askNameMsg, bizId);
+          // Patient is interested — commit session to DB and hand off to doctor
+          const apptSession = await getSession(senderId);
+          if (apptSession?.name || apptSession?.phone) {
+            // Session has data — commit it and send to doctor
+            await supabase.from("customers").upsert(
+              {
+                instagram_id:      senderId,
+                name:              apptSession.name,
+                first_name:        apptSession.name?.split(" ")[0] ?? null,
+                last_name:         apptSession.name?.split(" ").slice(1).join(" ") || null,
+                phone:             apptSession.phone,
+                has_photo:         !!apptSession.photo_url,
+                last_dental_image: apptSession.photo_url,
+                status:            "WAITING_FOR_DOCTOR",
+                last_seen_at:      new Date().toISOString(),
+                business_owner_id: apptSession.biz_id ?? bizId,
+              },
+              { onConflict: "instagram_id" }
+            );
+            await deleteSession(senderId);
+            console.log("[SESSION] Committed to DB → WAITING_FOR_DOCTOR");
+            const bookMsg = `واخا ${apptSession.name?.split(" ")[0] ?? ""} 😊 الطبيب غيتصل بيك ف ${apptSession.phone ?? ""} دابا شوية!`;
+            await sendDM(senderId, bookMsg, token);
+            await saveMsgHistory(senderId, combinedText || messageText || "", bookMsg, bizId);
+          } else {
+            // No session — start collecting from scratch
+            await supabase
+              .from("customers")
+              .update({ status: "BOT_ACTIVE" })
+              .eq("instagram_id", senderId);
+            const askNameMsg = "عافاك عطيني سميتك الكاملة (الإسم و النسب) 😊";
+            await sendDM(senderId, askNameMsg, token);
+            await saveMsgHistory(senderId, combinedText || messageText || "", askNameMsg, bizId);
+          }
           return new Response("OK", { status: 200 });
         }
       } catch (err) {
