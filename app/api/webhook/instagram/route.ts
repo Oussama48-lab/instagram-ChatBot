@@ -816,49 +816,24 @@ Patient reply: "${combinedText || messageText}"`;
           console.log("[SESSION] Deleted — sent price list");
           return new Response("OK", { status: 200 });
         } else {
-          const apptSession = await getSession(senderId);
-          if (apptSession) {
-            await supabase.from("customers").upsert(
-              {
-                instagram_id:      senderId,
-                name:              apptSession.name,
-                first_name:        apptSession.name?.split(" ")[0] ?? null,
-                last_name:         apptSession.name?.split(" ").slice(1).join(" ") || null,
-                phone:             apptSession.phone,
-                has_photo:         !!apptSession.photo_url,
-                last_dental_image: apptSession.photo_url,
-                status:            "WAITING_FOR_DOCTOR",
-                last_seen_at:      new Date().toISOString(),
-                business_owner_id: apptSession.biz_id,
-              },
-              { onConflict: "instagram_id" }
-            );
-            await deleteSession(senderId);
-            console.log("[SESSION] Committed to DB");
-          } else {
-            await supabase
-              .from("customers")
-              .update({ status: "WAITING_FOR_DOCTOR" })
-              .eq("instagram_id", senderId);
-          }
-          const bookMsg = "Tbib ghaychof dossier dyalk o ghaycontactik daba chwya 😊";
-          await sendDM(senderId, bookMsg, token);
-          await saveMsgHistory(
-            senderId,
-            combinedText || messageText || "",
-            bookMsg,
-            bizId
-          );
+          // Patient is interested — start collecting info
+          await supabase
+            .from("customers")
+            .update({ status: "BOT_ACTIVE" })
+            .eq("instagram_id", senderId);
+          const askNameMsg = "عافاك عطيني سميتك الكاملة (الإسم و النسب) 😊";
+          await sendDM(senderId, askNameMsg, token);
+          await saveMsgHistory(senderId, combinedText || messageText || "", askNameMsg, bizId);
           return new Response("OK", { status: 200 });
         }
       } catch (err) {
         console.error("[APPOINTMENT INTENT] Error:", err);
-        const bookMsg = "Tbib ghaychof dossier dyalk o ghaycontactik daba chwya 😊";
-        await sendDM(senderId, bookMsg, token);
         await supabase
           .from("customers")
-          .update({ status: "WAITING_FOR_DOCTOR" })
+          .update({ status: "BOT_ACTIVE" })
           .eq("instagram_id", senderId);
+        const askNameMsg = "عافاك عطيني سميتك الكاملة (الإسم و النسب) 😊";
+        await sendDM(senderId, askNameMsg, token);
         return new Response("OK", { status: 200 });
       }
     }
