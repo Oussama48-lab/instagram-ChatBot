@@ -420,6 +420,13 @@ export default function CommandCenterPage() {
               {chip("IG: Connected", "purple")}
               {chip("Auto-Reply: On", "zinc")}
               {chip("Bookings: Live", "emerald")}
+              <a
+                href="/privacy"
+                target="_blank"
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition"
+              >
+                Privacy Policy
+              </a>
             </div>
             <button
               onClick={async () => {
