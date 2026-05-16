@@ -311,22 +311,106 @@ export default function CommandCenterPage() {
   ).length;
   const lostCount = archivedCount;
 
+  const colorMap = {
+    emerald: {
+      bg: "bg-[#10B981]/10",
+      border: "group-hover:border-[#10B981]/30",
+      glow: "group-hover:shadow-[0_0_30px_-10px_rgba(16,185,129,0.4)]",
+      gradient: "from-[#10B981]/0 via-[#10B981]/50 to-[#10B981]/0",
+      badge: "bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20",
+    },
+    purple: {
+      bg: "bg-[#7C3AED]/10",
+      border: "group-hover:border-[#7C3AED]/30",
+      glow: "group-hover:shadow-[0_0_30px_-10px_rgba(124,58,237,0.4)]",
+      gradient: "from-[#7C3AED]/0 via-[#7C3AED]/50 to-[#7C3AED]/0",
+      badge: "bg-[#7C3AED]/10 text-[#7C3AED] border-[#7C3AED]/20",
+    },
+    red: {
+      bg: "bg-[#EF4444]/10",
+      border: "group-hover:border-[#EF4444]/30",
+      glow: "group-hover:shadow-[0_0_30px_-10px_rgba(239,68,68,0.4)]",
+      gradient: "from-[#EF4444]/0 via-[#EF4444]/50 to-[#EF4444]/0",
+      badge: "bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/20",
+    }
+  } as const;
+
   const stats = [
     {
       title: "Confirmed Appointments",
       value: String(bookedCount),
-      accent: "from-[#10B981] to-[#34D399]",
+      subtitle: "Appointments this month",
+      trend: "12%",
+      isPositive: true,
+      color: "emerald",
+      icon: (
+        <svg className="h-5 w-5 text-[#10B981]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      sparkline: (
+        <svg className="h-8 w-16" viewBox="0 0 64 32" fill="none">
+          <path d="M0 24 C 10 24, 15 16, 25 18 C 35 20, 45 8, 64 6" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M0 24 C 10 24, 15 16, 25 18 C 35 20, 45 8, 64 6 L 64 32 L 0 32 Z" fill="url(#spark-emerald)" opacity="0.2" />
+          <defs>
+            <linearGradient id="spark-emerald" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10B981" stopOpacity="1" />
+              <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+        </svg>
+      )
     },
     {
       title: "High-Intent Leads",
       value: String(highIntentCount),
-      accent: "from-[#7C3AED] to-[#D946EF]",
+      subtitle: "Active pipeline leads",
+      trend: "24%",
+      isPositive: true,
+      color: "purple",
+      icon: (
+        <svg className="h-5 w-5 text-[#7C3AED]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      ),
+      sparkline: (
+        <svg className="h-8 w-16" viewBox="0 0 64 32" fill="none">
+          <path d="M0 28 C 15 28, 20 20, 35 15 C 45 10, 55 6, 64 4" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M0 28 C 15 28, 20 20, 35 15 C 45 10, 55 6, 64 4 L 64 32 L 0 32 Z" fill="url(#spark-purple)" opacity="0.2" />
+          <defs>
+            <linearGradient id="spark-purple" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#7C3AED" stopOpacity="1" />
+              <stop offset="100%" stopColor="#7C3AED" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+        </svg>
+      )
     },
     {
       title: "Leads Lost",
       value: String(lostCount),
-      accent: "from-[#EF4444] to-[#FCA5A5]",
-    },
+      subtitle: "Dropped this month",
+      trend: "4%",
+      isPositive: false,
+      color: "red",
+      icon: (
+        <svg className="h-5 w-5 text-[#EF4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      ),
+      sparkline: (
+        <svg className="h-8 w-16" viewBox="0 0 64 32" fill="none">
+          <path d="M0 10 C 15 10, 20 18, 35 22 C 45 26, 55 28, 64 30" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M0 10 C 15 10, 20 18, 35 22 C 45 26, 55 28, 64 30 L 64 32 L 0 32 Z" fill="url(#spark-red)" opacity="0.2" />
+          <defs>
+            <linearGradient id="spark-red" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#EF4444" stopOpacity="1" />
+              <stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+        </svg>
+      )
+    }
   ];
 
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
@@ -460,19 +544,59 @@ export default function CommandCenterPage() {
               </div>
 
               <div className="relative mt-5">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  {stats.map((s) => (
-                    <div
-                      key={s.title}
-                      className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.05)] flex flex-col items-center justify-center text-center"
-                    >
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  {stats.map((s) => {
+                    const styles = colorMap[s.color as keyof typeof colorMap];
+                    return (
                       <div
-                        className={`pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${s.accent}`}
-                      />
-                      <div className="text-sm font-semibold text-zinc-300 tracking-wide">{s.title}</div>
-                      <div className="mt-3 text-5xl font-bold tracking-tight text-white">{s.value}</div>
-                    </div>
-                  ))}
+                        key={s.title}
+                        className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-[#07070B]/80 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${styles.border} ${styles.glow}`}
+                      >
+                        {/* Animated gradient light border on hover */}
+                        <div className="pointer-events-none absolute inset-0">
+                          <div className={`absolute -top-px left-1/2 h-[2px] w-3/4 -translate-x-1/2 bg-gradient-to-r ${styles.gradient} opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        </div>
+
+                        <div className="relative z-10 flex h-full flex-col justify-between">
+                          {/* Top Header */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-10 w-10 items-center justify-center rounded-xl border border-white/5 ${styles.bg}`}>
+                                {s.icon}
+                              </div>
+                              <span className="text-sm font-semibold text-zinc-300">{s.title}</span>
+                            </div>
+                            {/* Trend Badge */}
+                            <div className={`flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold tracking-wide ${styles.badge}`}>
+                              {s.isPositive ? (
+                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                              ) : (
+                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />
+                                </svg>
+                              )}
+                              {s.trend}
+                            </div>
+                          </div>
+
+                          {/* Bottom Content */}
+                          <div className="mt-8 flex items-end justify-between">
+                            <div>
+                              <h3 className="text-4xl font-bold tracking-tight text-white">{s.value}</h3>
+                              <p className="mt-2 text-xs font-medium text-zinc-500">{s.subtitle}</p>
+                            </div>
+                            {/* Sparkline interaction */}
+                            <div className="mb-1 opacity-50 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0">
+                              {s.sparkline}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
